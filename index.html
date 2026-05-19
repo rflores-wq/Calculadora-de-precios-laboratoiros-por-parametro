@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a56db">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="LabPrecio">
+<link rel="manifest" id="manifest-placeholder">
+<title>LabPrecio — Calculadora de parámetros</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc;--bg2:#ffffff;--bg3:#f1f5f9;
+  --card:#ffffff;
+  --accent:#1a56db;--accent-light:#eff6ff;--accent-dark:#1e40af;
+  --green:#059669;--green-light:#ecfdf5;
+  --amber:#d97706;--amber-light:#fffbeb;
+  --red:#dc2626;--red-light:#fef2f2;
+  --purple:#7c3aed;--purple-light:#f5f3ff;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+  --shadow2:0 4px 6px rgba(0,0,0,.07);
+  --r:12px;--r2:8px;--r3:6px;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh;max-width:430px;margin:0 auto;background:var(--bg)}
+#header{background:var(--accent);color:#fff;padding:14px 18px 12px;flex-shrink:0;box-shadow:var(--shadow2)}
+#header-top{display:flex;align-items:center;justify-content:space-between}
+#header h1{font-family:var(--mono);font-size:16px;font-weight:500;letter-spacing:.02em}
+#header-sub{font-size:11px;opacity:.75;margin-top:2px}
+#param-badge{background:rgba(255,255,255,.2);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:500}
+#nav{background:var(--bg2);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);flex-shrink:0;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
+.nav-btn{flex:1;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--text3);font-family:var(--sans);font-size:10px;cursor:pointer;transition:color .15s;position:relative}
+.nav-btn.active{color:var(--accent)}
+.nav-btn.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--accent);border-radius:2px 2px 0 0}
+.nav-icon{font-size:20px;line-height:1}
+#content{flex:1;overflow-y:auto;padding:14px 14px 10px;-webkit-overflow-scrolling:touch}
+#content::-webkit-scrollbar{display:none}
+.screen{display:none}.screen.active{display:block}
+#install-banner{background:var(--accent-light);border:1px solid #bfdbfe;border-radius:var(--r);padding:11px 13px;margin-bottom:12px;display:none;gap:10px;align-items:flex-start}
+#install-banner p{font-size:12px;color:var(--accent-dark);line-height:1.5;flex:1}
+#install-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--r3);padding:7px 12px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:var(--sans)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-title{font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:11px}
+.field{margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.hint{font-size:11px;color:var(--text3);display:block;margin-bottom:5px}
+.field input[type=text],.field input[type=number],.field select{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r2);font-size:14px;font-family:var(--sans);color:var(--text);background:var(--bg3);outline:none;-webkit-appearance:none;appearance:none}
+.field input:focus,.field select:focus{border-color:var(--accent);background:#fff}
+.field-row{display:flex;gap:8px}
+.field-row .field{flex:1;margin-bottom:0}
+.field-row .field-sm{flex:0 0 80px}
+.slider-wrap{margin-bottom:10px}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.slider-header label{font-size:12px;font-weight:500;color:var(--text2)}
+.slider-val{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-light);padding:2px 8px;border-radius:20px}
+input[type=range]{width:100%;height:4px;border-radius:2px;-webkit-appearance:none;appearance:none;background:var(--border2);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent)}
+
+/* INFO CHIPS */
+.info-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--text2);margin-top:6px;font-family:var(--mono)}
+.info-chip.green{background:var(--green-light);border-color:#a7f3d0;color:var(--green)}
+.info-chip.amber{background:var(--amber-light);border-color:#fde68a;color:var(--amber)}
+.chip-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+
+/* REACTIVOS */
+.reactivo-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.reactivo-row input[type=text]{flex:2;padding:9px 10px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r2);background:var(--bg3);color:var(--text);font-family:var(--sans);outline:none}
+.reactivo-row input[type=number]{width:76px;flex-shrink:0;padding:9px 10px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r2);background:var(--bg3);color:var(--text);font-family:var(--sans);outline:none;text-align:right}
+.del-btn{background:none;border:1px solid var(--border2);border-radius:var(--r3);color:var(--text3);padding:7px 9px;font-size:13px;cursor:pointer;flex-shrink:0}
+.add-btn{width:100%;padding:9px;border:1px dashed var(--border2);border-radius:var(--r2);background:none;color:var(--text3);font-size:13px;cursor:pointer;margin-top:4px;font-family:var(--sans)}
+.react-total{font-size:11px;color:var(--text3);margin-top:8px;text-align:right}
+
+/* CONSUMIBLES */
+.consumible-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.consumible-row input[type=text]{flex:2;padding:9px 10px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r2);background:var(--bg3);color:var(--text);font-family:var(--sans);outline:none}
+.consumible-row input[type=number]{width:76px;flex-shrink:0;padding:9px 10px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r2);background:var(--bg3);color:var(--text);font-family:var(--sans);outline:none;text-align:right}
+
+/* RESULTADO */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.metric{background:var(--bg3);border-radius:var(--r2);padding:11px 12px;border:1px solid var(--border)}
+.metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.metric-value{font-family:var(--mono);font-size:17px;font-weight:500;color:var(--text)}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.metric.m-accent{background:var(--accent-light);border-color:#bfdbfe}.metric.m-accent .metric-value{color:var(--accent)}
+.metric.m-green{background:var(--green-light);border-color:#a7f3d0}.metric.m-green .metric-value{color:var(--green)}
+.metric.m-amber{background:var(--amber-light);border-color:#fde68a}.metric.m-amber .metric-value{color:var(--amber)}
+.metric.m-purple{background:var(--purple-light);border-color:#ddd6fe}.metric.m-purple .metric-value{color:var(--purple)}
+.precio-hero{background:var(--accent);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.precio-hero-label{color:rgba(255,255,255,.8);font-size:12px;margin-bottom:4px}
+.precio-hero-value{color:#fff;font-family:var(--mono);font-size:30px;font-weight:500}
+.precio-hero-param{color:rgba(255,255,255,.9);font-size:13px;font-weight:500}
+.desglose-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.desglose-item:last-child{border-bottom:none;font-weight:600}
+.desglose-name{color:var(--text2);display:flex;align-items:center;gap:6px}
+.pct-badge{font-size:10px;background:var(--bg3);border-radius:20px;padding:1px 7px;color:var(--text3)}
+.desglose-val{font-family:var(--mono);font-size:13px;color:var(--text);font-weight:500}
+.alert{border-radius:var(--r2);padding:10px 13px;font-size:12px;line-height:1.6;margin-bottom:10px;border-left:3px solid}
+.alert-green{border-color:var(--green);background:var(--green-light);color:#065f46}
+.alert-amber{border-color:var(--amber);background:var(--amber-light);color:#92400e}
+.alert-blue{border-color:var(--accent);background:var(--accent-light);color:var(--accent-dark)}
+.calc-btn{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:500;cursor:pointer;font-family:var(--sans);box-shadow:var(--shadow2);margin-top:4px}
+.calc-btn:active{opacity:.9}
+
+/* HISTORIAL */
+.hist-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;margin-bottom:8px;box-shadow:var(--shadow)}
+.hist-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.hist-nombre{font-size:14px;font-weight:500;color:var(--text)}
+.hist-precio{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--accent)}
+.hist-meta{font-size:11px;color:var(--text3)}
+.hist-desglose{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)}
+.hist-actions{display:flex;gap:6px;margin-top:8px}
+.hist-btn{flex:1;padding:7px;border:1px solid var(--border2);border-radius:var(--r3);background:none;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--sans)}
+.hist-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-icon{font-size:44px;margin-bottom:12px}
+.empty-state p{font-size:13px;line-height:1.7}
+
+/* INFO */
+.info-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;margin-bottom:12px}
+.info-card-title{font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.info-p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px}
+.info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.info-row:last-child{border-bottom:none}
+.info-row span:first-child{color:var(--text2)}
+.info-row span:last-child{font-family:var(--mono);color:var(--text);font-weight:500}
+.version-badge{display:inline-block;background:var(--accent-light);color:var(--accent);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500;margin-top:8px}
+.info-step{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start}
+.info-step-num{background:var(--accent);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:2px}
+.info-step-text{font-size:13px;color:var(--text2);line-height:1.6}
+.info-step-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+
+/* SEPARADOR DE SECCIÓN */
+.section-sep{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 8px 2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div id="header-top">
+      <div>
+        <h1>LABPRECIO</h1>
+        <div id="header-sub">Calculadora de costos — CS UCB Cochabamba</div>
+      </div>
+      <span id="param-badge">v2.0</span>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- CALCULAR -->
+    <div class="screen active" id="screen-calc">
+      <div id="install-banner">
+        <p>Instalá esta app en tu pantalla de inicio para usar sin internet.</p>
+        <button id="install-btn" onclick="installApp()">Instalar</button>
+      </div>
+
+      <!-- 1. PARÁMETRO -->
+      <div class="card">
+        <div class="card-title">🧪 Parámetro</div>
+        <div class="field">
+          <label>Nombre del parámetro</label>
+          <input type="text" id="param_nombre" value="pH" placeholder="Ej: pH, DBO5, Plomo, PM10…">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Tipo de muestra</label>
+            <select id="param_tipo" onchange="toggleTipoOtro(this.value)">
+              <option>Agua convencional</option>
+              <option>Agua acreditada IBMETRO</option>
+              <option>Suelo</option>
+              <option>Aire</option>
+              <option>Alimentos</option>
+              <option value="otro">Otro (escribir)...</option>
+            </select>
+            <input type="text" id="param_tipo_otro" placeholder="Ej: Sedimento, Lodos, Biogás…" style="display:none;margin-top:6px">
+          </div>
+          <div class="field field-sm">
+            <label>Análisis/año</label>
+            <span class="hint">del equipo</span>
+            <input type="number" id="analisis_anio" value="300" min="1" inputmode="numeric" oninput="updateInfos()">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. DEPRECIACIÓN MEJORADA -->
+      <div class="card">
+        <div class="card-title">📉 Equipo — Depreciación real</div>
+        <div class="alert alert-blue" style="margin-bottom:10px">Método: Costo ÷ (vida útil × análisis/año) = costo fijo por análisis.</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Valor del equipo (Bs.)</label>
+            <input type="number" id="equipo_val" value="21000" min="0" inputmode="numeric" oninput="updateInfos()">
+          </div>
+          <div class="field field-sm">
+            <label>Vida útil (años)</label>
+            <input type="number" id="equipo_vida" value="8" min="1" max="30" inputmode="numeric" oninput="updateInfos()">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Mantenimiento anual (Bs.)</label>
+            <span class="hint">Revisiones, repuestos</span>
+            <input type="number" id="mant_anual" value="1200" min="0" inputmode="numeric" oninput="updateInfos()">
+          </div>
+          <div class="field field-sm">
+            <label>% uso param.</label>
+            <span class="hint">De este equipo</span>
+            <input type="number" id="pct_equipo" value="10" min="1" max="100" inputmode="numeric" oninput="updateInfos()">
+          </div>
+        </div>
+        <div class="chip-row" id="dep_chips"></div>
+      </div>
+
+      <!-- 3. ENERGÍA ELÉCTRICA -->
+      <div class="card">
+        <div class="card-title">⚡ Energía eléctrica</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Potencia del equipo (W)</label>
+            <span class="hint">Ver placa o manual</span>
+            <input type="number" id="watts" value="50" min="0" inputmode="numeric" oninput="updateInfos()">
+          </div>
+          <div class="field field-sm">
+            <label>Tiempo (min)</label>
+            <span class="hint">Encendido/análisis</span>
+            <input type="number" id="tiempo_equipo_min" value="15" min="0" inputmode="numeric" oninput="updateInfos()">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Tarifa eléctrica (Bs./kWh)</label>
+            <input type="number" id="tarifa_kwh" value="0.90" min="0" step="0.01" inputmode="decimal" oninput="updateInfos()">
+          </div>
+        </div>
+        <div class="chip-row" id="energia_chips"></div>
+      </div>
+
+      <!-- 4. REACTIVOS -->
+      <div class="card">
+        <div class="card-title">🧴 Reactivos (por análisis)</div>
+        <div class="alert alert-blue" style="margin-bottom:10px">Solo los reactivos de este parámetro.</div>
+        <div id="reactivos-list"></div>
+        <button class="add-btn" onclick="addReactivo()">+ Agregar reactivo</button>
+      </div>
+
+      <!-- 5. CONSUMIBLES NO REACTIVOS -->
+      <div class="card">
+        <div class="card-title">🧤 Consumibles no reactivos (por análisis)</div>
+        <span class="hint" style="display:block;margin-bottom:8px">Tips de pipeta, tubos, filtros, guantes, papel, etc.</span>
+        <div id="consumibles-list"></div>
+        <button class="add-btn" onclick="addConsumible()">+ Agregar consumible</button>
+      </div>
+
+      <!-- 6. MANO DE OBRA -->
+      <div class="card">
+        <div class="card-title">👩‍🔬 Mano de obra</div>
+        <div class="field-row">
+          <div class="field">
+            <label>Sueldo analista (Bs./mes)</label>
+            <input type="number" id="sueldo" value="5000" min="0" inputmode="numeric" oninput="updateInfos()">
+          </div>
+          <div class="field field-sm">
+            <label>Tiempo (min)</label>
+            <span class="hint">por análisis</span>
+            <input type="number" id="tiempo_analisis" value="30" min="1" inputmode="numeric" oninput="updateInfos()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Horas laborables al mes</label>
+          <input type="number" id="horas_mes" value="160" min="1" inputmode="numeric" oninput="updateInfos()">
+        </div>
+        <div class="chip-row" id="mo_chips"></div>
+      </div>
+
+      <!-- 7. COSTOS INDIRECTOS DEL LAB -->
+      <div class="card">
+        <div class="card-title">🏛️ Costos indirectos del laboratorio</div>
+        <span class="hint" style="display:block;margin-bottom:8px">Se distribuyen entre todos los análisis del mes.</span>
+        <div class="field-row">
+          <div class="field">
+            <label>Servicios básicos (Bs./mes)</label>
+            <span class="hint">Agua, gas, internet</span>
+            <input type="number" id="servicios" value="800" min="0" inputmode="numeric" oninput="updateInfos()">
+          </div>
+          <div class="field">
+            <label>ISO 17025 (Bs./mes)</label>
+            <span class="hint">0 si no aplica</span>
+            <input type="number" id="acreditacion" value="0" min="0" inputmode="numeric" oninput="updateInfos()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Calibración / metrología (Bs./mes)</label>
+          <input type="number" id="calibracion" value="200" min="0" inputmode="numeric" oninput="updateInfos()">
+        </div>
+        <div class="field-row">
+          <div class="field field-sm">
+            <label>Análisis/mes lab</label>
+            <span class="hint">Total del lab</span>
+            <input type="number" id="analisis_mes_lab" value="50" min="1" inputmode="numeric" oninput="updateInfos()">
+          </div>
+        </div>
+        <div class="chip-row" id="ind_chips"></div>
+      </div>
+
+      <!-- 8. MARGEN Y AJUSTES -->
+      <div class="card">
+        <div class="card-title">📊 Margen y ajustes</div>
+        <div class="slider-wrap">
+          <div class="slider-header"><label>Margen objetivo</label><span class="slider-val" id="margen_v">40%</span></div>
+          <input type="range" id="margen" min="10" max="150" step="5" value="40" oninput="sv('margen_v',this.value+'%')">
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-header"><label>Sobreprecio acreditado ISO 17025</label><span class="slider-val" id="factor_acred_v">0%</span></div>
+          <input type="range" id="factor_acred" min="0" max="50" step="5" value="0" oninput="sv('factor_acred_v',this.value+'%')">
+        </div>
+        <div class="slider-wrap" style="margin-bottom:0">
+          <div class="slider-header"><label>Descuento por contrato/volumen</label><span class="slider-val" id="desc_vol_v">0%</span></div>
+          <input type="range" id="desc_vol" min="0" max="30" step="5" value="0" oninput="sv('desc_vol_v',this.value+'%')">
+        </div>
+      </div>
+
+      <button class="calc-btn" onclick="calcular()">Calcular precio →</button>
+      <div id="resultado" style="margin-top:14px"></div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div class="screen" id="screen-hist">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Parámetros guardados</div>
+        <button onclick="limpiarHistorial()" style="font-size:12px;color:var(--red);background:none;border:none;cursor:pointer">Limpiar todo</button>
+      </div>
+      <div id="hist-content"></div>
+    </div>
+
+    <!-- INFO -->
+    <div class="screen" id="screen-info">
+      <div class="info-card">
+        <div class="info-card-title">Sobre LabPrecio</div>
+        <div class="info-p">Calculadora de precios por parámetro para laboratorios de servicios ambientales en Bolivia. Calcula el precio de venta real considerando depreciación, energía, mano de obra, consumibles y costos indirectos.</div>
+        <div class="version-badge">Versión 2.0 — 2026</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Cómo funciona</div>
+        <div class="info-step">
+          <div class="info-step-num">1</div>
+          <div><div class="info-step-title">Depreciación real</div><div class="info-step-text">Costo equipo ÷ (vida útil × análisis/año) × % uso. Método por vida total, más estable que el mensual.</div></div>
+        </div>
+        <div class="info-step">
+          <div class="info-step-num">2</div>
+          <div><div class="info-step-title">Energía eléctrica</div><div class="info-step-text">(Watts ÷ 1000) × (minutos ÷ 60) × tarifa Bs/kWh. Refleja el consumo real del equipo por análisis.</div></div>
+        </div>
+        <div class="info-step">
+          <div class="info-step-num">3</div>
+          <div><div class="info-step-title">Reactivos + Consumibles</div><div class="info-step-text">Suma directa de reactivos y consumibles no reactivos usados por análisis.</div></div>
+        </div>
+        <div class="info-step">
+          <div class="info-step-num">4</div>
+          <div><div class="info-step-title">Mano de obra</div><div class="info-step-text">Sueldo ÷ (horas/mes × 60) = Bs./min × minutos del análisis.</div></div>
+        </div>
+        <div class="info-step" style="margin-bottom:0">
+          <div class="info-step-num">5</div>
+          <div><div class="info-step-title">Costos indirectos</div><div class="info-step-text">Servicios + ISO + calibración, distribuidos entre el total de análisis del mes del laboratorio.</div></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Referencia — CS UCB Cochabamba (2019)</div>
+        <div class="info-row"><span>pH acreditado</span><span>Bs. 21</span></div>
+        <div class="info-row"><span>DBO5</span><span>Bs. 180</span></div>
+        <div class="info-row"><span>DQO</span><span>Bs. 96</span></div>
+        <div class="info-row"><span>Coliformes totales/fecales</span><span>Bs. 216</span></div>
+        <div class="info-row"><span>Metales pesados (c/u)</span><span>Bs. 96</span></div>
+        <div class="info-row"><span>Aceites y grasas</span><span>Bs. 180</span></div>
+        <div class="info-row"><span>Biomasa microbiana suelo</span><span>Bs. 350</span></div>
+        <div class="info-row"><span>PM10 (aire)</span><span>Bs. 280</span></div>
+        <div class="info-row"><span>PM2.5 (aire)</span><span>Bs. 350</span></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Instalar en Android (Chrome)</div>
+        <div class="info-step">
+          <div class="info-step-num">1</div>
+          <div><div class="info-step-text">Abrí el archivo en Chrome para Android.</div></div>
+        </div>
+        <div class="info-step">
+          <div class="info-step-num">2</div>
+          <div><div class="info-step-text">Tocá el menú ⋮ → <strong>"Añadir a pantalla de inicio"</strong>.</div></div>
+        </div>
+        <div class="info-step" style="margin-bottom:0">
+          <div class="info-step-num">3</div>
+          <div><div class="info-step-text">Compartí el HTML por <strong>WhatsApp</strong> con tus colegas.</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <nav id="nav">
+    <button class="nav-btn active" onclick="showScreen('calc',this)">
+      <div class="nav-icon">🧮</div>Calcular
+    </button>
+    <button class="nav-btn" onclick="showScreen('hist',this);renderHistorial()">
+      <div class="nav-icon">📋</div>Guardados
+    </button>
+    <button class="nav-btn" onclick="showScreen('info',this)">
+      <div class="nav-icon">ℹ️</div>Info
+    </button>
+  </nav>
+</div>
+
+<script>
+// ─── TIPO DE MUESTRA ─────────────────────────────────────────────────────────
+function toggleTipoOtro(val){
+  const otro=document.getElementById('param_tipo_otro');
+  otro.style.display=val==='otro'?'block':'none';
+  if(val==='otro') otro.focus();
+}
+
+// ─── ESTADO ───────────────────────────────────────────────────────────────────
+let reactivos=[{nombre:'Buffer pH 4',costo:5},{nombre:'Buffer pH 7',costo:5},{nombre:'Electrolito electrodo',costo:3}];
+let consumibles=[{nombre:'Tips de pipeta',costo:1.5},{nombre:'Guantes (par)',costo:2}];
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function g(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function gs(id){return document.getElementById(id)?.value||'';}
+function bs(v){return 'Bs. '+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function bsr(v){return 'Bs. '+Math.round(v).toLocaleString('es-BO');}
+function sv(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+function chip(txt,cls=''){return `<span class="info-chip ${cls}">${txt}</span>`;}
+
+// ─── UPDATE INFOS (chips en tiempo real) ─────────────────────────────────────
+function updateInfos(){
+  const analisisAnio=Math.max(1,g('analisis_anio'));
+  const vidaAnios=Math.max(1,g('equipo_vida'));
+  const pct=g('pct_equipo')/100||0.1;
+
+  // Depreciación
+  const depTotal=g('equipo_val')/(vidaAnios*analisisAnio)*pct;
+  const mantUnit=g('mant_anual')/analisisAnio*pct;
+  const depUnit=depTotal+mantUnit;
+  const dc=document.getElementById('dep_chips');
+  if(dc) dc.innerHTML=
+    chip('Dep: '+bs(depTotal)+'/análisis')+
+    chip('Mant: '+bs(mantUnit)+'/análisis')+
+    chip('Total: '+bs(depUnit)+'/análisis','green');
+
+  // Energía
+  const kw=g('watts')/1000;
+  const horas=g('tiempo_equipo_min')/60;
+  const energiaUnit=kw*horas*g('tarifa_kwh');
+  const ec=document.getElementById('energia_chips');
+  if(ec) ec.innerHTML=
+    chip((kw*horas*1000).toFixed(1)+' Wh/análisis')+
+    chip('Costo: '+bs(energiaUnit)+'/análisis','green');
+
+  // Mano de obra
+  const costoMin=g('sueldo')/(Math.max(1,g('horas_mes'))*60);
+  const moUnit=costoMin*g('tiempo_analisis');
+  const mc=document.getElementById('mo_chips');
+  if(mc) mc.innerHTML=
+    chip('Bs.'+costoMin.toFixed(3)+'/min')+
+    chip(bs(moUnit)+'/análisis','green');
+
+  // Indirectos
+  const indTotal=g('servicios')+g('acreditacion')+g('calibracion');
+  const indUnit=indTotal/Math.max(1,g('analisis_mes_lab'));
+  const ic=document.getElementById('ind_chips');
+  if(ic) ic.innerHTML=
+    chip('Total lab: '+bsr(indTotal)+'/mes')+
+    chip(bs(indUnit)+'/análisis','green');
+}
+
+// ─── REACTIVOS ────────────────────────────────────────────────────────────────
+function renderReactivos(){
+  const div=document.getElementById('reactivos-list');
+  if(!div) return;
+  div.innerHTML=reactivos.map((r,i)=>`
+    <div class="reactivo-row">
+      <input type="text" value="${r.nombre}" placeholder="Reactivo…" oninput="reactivos[${i}].nombre=this.value">
+      <input type="number" value="${r.costo}" min="0" step="0.01" inputmode="decimal" placeholder="Bs." oninput="reactivos[${i}].costo=parseFloat(this.value)||0">
+      <button class="del-btn" onclick="reactivos.splice(${i},1);renderReactivos()">✕</button>
+    </div>`).join('')+
+    '<div class="react-total">Total reactivos: <strong>'+bs(reactivos.reduce((s,r)=>s+r.costo,0))+'</strong> / análisis</div>';
+}
+function addReactivo(){reactivos.push({nombre:'',costo:0});renderReactivos();}
+
+// ─── CONSUMIBLES ──────────────────────────────────────────────────────────────
+function renderConsumibles(){
+  const div=document.getElementById('consumibles-list');
+  if(!div) return;
+  div.innerHTML=consumibles.map((c,i)=>`
+    <div class="consumible-row">
+      <input type="text" value="${c.nombre}" placeholder="Consumible…" oninput="consumibles[${i}].nombre=this.value">
+      <input type="number" value="${c.costo}" min="0" step="0.01" inputmode="decimal" placeholder="Bs." oninput="consumibles[${i}].costo=parseFloat(this.value)||0">
+      <button class="del-btn" onclick="consumibles.splice(${i},1);renderConsumibles()">✕</button>
+    </div>`).join('')+
+    '<div class="react-total">Total consumibles: <strong>'+bs(consumibles.reduce((s,c)=>s+c.costo,0))+'</strong> / análisis</div>';
+}
+function addConsumible(){consumibles.push({nombre:'',costo:0});renderConsumibles();}
+
+// ─── CALCULAR ─────────────────────────────────────────────────────────────────
+function calcular(){
+  const nombre=gs('param_nombre')||'Parámetro';
+  const tipoSel=document.getElementById('param_tipo');
+  const tipo=tipoSel.value==='otro'?(document.getElementById('param_tipo_otro').value.trim()||'Otro'):tipoSel.value;
+  const analisisAnio=Math.max(1,g('analisis_anio'));
+  const vidaAnios=Math.max(1,g('equipo_vida'));
+  const pct=g('pct_equipo')/100||0.1;
+
+  // 1. Depreciación (método vida total)
+  const depEquipo=g('equipo_val')/(vidaAnios*analisisAnio)*pct;
+  const mantUnit=g('mant_anual')/analisisAnio*pct;
+  const depUnit=depEquipo+mantUnit;
+
+  // 2. Energía eléctrica
+  const energiaUnit=(g('watts')/1000)*(g('tiempo_equipo_min')/60)*g('tarifa_kwh');
+
+  // 3. Reactivos
+  const reactUnit=reactivos.reduce((s,r)=>s+r.costo,0);
+
+  // 4. Consumibles no reactivos
+  const consumUnit=consumibles.reduce((s,c)=>s+c.costo,0);
+
+  // 5. Mano de obra
+  const moUnit=(g('sueldo')/(Math.max(1,g('horas_mes'))*60))*g('tiempo_analisis');
+
+  // 6. Costos indirectos
+  const indUnit=(g('servicios')+g('acreditacion')+g('calibracion'))/Math.max(1,g('analisis_mes_lab'));
+
+  const costoUnit=depUnit+energiaUnit+reactUnit+consumUnit+moUnit+indUnit;
+  const margen=g('margen')/100;
+  const precioBase=costoUnit*(1+margen);
+  const precioAcred=precioBase*(1+g('factor_acred')/100);
+  const precioContrato=precioBase*(1-g('desc_vol')/100);
+  const margenBs=precioBase-costoUnit;
+
+  function pct2(v){return costoUnit>0?Math.round(v/costoUnit*100):0;}
+
+  // Referencia UCB
+  const refs={'ph':21,'dbo':180,'dqo':96,'coliform':216,'pm10':280,'pm2':350,'aceite':180,'biomasa':350,'metal':96};
+  const nl=nombre.toLowerCase();
+  let refMsg='';
+  for(const[k,v] of Object.entries(refs)){if(nl.includes(k)){refMsg=`Ref. UCB: Bs. ${v}`;break;}}
+
+  const res=document.getElementById('resultado');
+  res.innerHTML=`
+    <div class="precio-hero">
+      <div>
+        <div class="precio-hero-label">Precio sugerido</div>
+        <div class="precio-hero-value">${bsr(precioBase)}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="precio-hero-param">${nombre}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">${tipo}</div>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Costo real</div><div class="metric-value">${bsr(costoUnit)}</div><div class="metric-sub">Sin margen</div></div>
+      <div class="metric m-green"><div class="metric-label">Margen</div><div class="metric-value">${bsr(margenBs)}</div><div class="metric-sub">${Math.round(g('margen'))}% sobre costo</div></div>
+      ${g('factor_acred')>0?`<div class="metric m-accent"><div class="metric-label">Precio acreditado</div><div class="metric-value">${bsr(precioAcred)}</div><div class="metric-sub">+${Math.round(g('factor_acred'))}% ISO</div></div>`:''}
+      ${g('desc_vol')>0?`<div class="metric m-amber"><div class="metric-label">Precio contrato</div><div class="metric-value">${bsr(precioContrato)}</div><div class="metric-sub">-${Math.round(g('desc_vol'))}% desc.</div></div>`:''}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Desglose del costo</div>
+      <div class="desglose-item">
+        <span class="desglose-name">Depreciación + mantenimiento <span class="pct-badge">${pct2(depUnit)}%</span></span>
+        <span class="desglose-val">${bs(depUnit)}</span>
+      </div>
+      <div class="desglose-item">
+        <span class="desglose-name">Energía eléctrica <span class="pct-badge">${pct2(energiaUnit)}%</span></span>
+        <span class="desglose-val">${bs(energiaUnit)}</span>
+      </div>
+      <div class="desglose-item">
+        <span class="desglose-name">Reactivos <span class="pct-badge">${pct2(reactUnit)}%</span></span>
+        <span class="desglose-val">${bs(reactUnit)}</span>
+      </div>
+      <div class="desglose-item">
+        <span class="desglose-name">Consumibles no reactivos <span class="pct-badge">${pct2(consumUnit)}%</span></span>
+        <span class="desglose-val">${bs(consumUnit)}</span>
+      </div>
+      <div class="desglose-item">
+        <span class="desglose-name">Mano de obra <span class="pct-badge">${pct2(moUnit)}%</span></span>
+        <span class="desglose-val">${bs(moUnit)}</span>
+      </div>
+      <div class="desglose-item">
+        <span class="desglose-name">Costos indirectos lab <span class="pct-badge">${pct2(indUnit)}%</span></span>
+        <span class="desglose-val">${bs(indUnit)}</span>
+      </div>
+      <div class="desglose-item">
+        <span class="desglose-name" style="color:var(--text);font-weight:600">Costo total</span>
+        <span class="desglose-val">${bs(costoUnit)}</span>
+      </div>
+    </div>
+
+    ${refMsg?`<div class="alert alert-blue">${refMsg} para ${nombre}</div>`:''}
+    ${precioBase<costoUnit?`<div class="alert alert-amber">El precio no cubre los costos. Revisá el margen o los parámetros.</div>`:''}
+    ${energiaUnit<0.01?`<div class="alert alert-amber">El costo de energía es muy bajo. Verificá los watts y el tiempo de funcionamiento.</div>`:''}
+
+    <button class="calc-btn" style="background:#fff;color:var(--accent);border:1.5px solid var(--accent);margin-bottom:8px;box-shadow:none"
+      onclick="guardar('${nombre.replace(/'/g,"\\'")}','${tipo}',${costoUnit.toFixed(2)},${precioBase.toFixed(2)},${depUnit.toFixed(2)},${energiaUnit.toFixed(2)},${moUnit.toFixed(2)},${reactUnit.toFixed(2)},${consumUnit.toFixed(2)},${indUnit.toFixed(2)})">
+      Guardar este parámetro
+    </button>`;
+  res.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ─── HISTORIAL ────────────────────────────────────────────────────────────────
+function guardar(nombre,tipo,costo,precio,dep,energia,mo,react,consum,ind){
+  const hist=JSON.parse(localStorage.getItem('lp2_hist')||'[]');
+  hist.unshift({nombre,tipo,costo:parseFloat(costo),precio:parseFloat(precio),dep:parseFloat(dep),energia:parseFloat(energia),mo:parseFloat(mo),react:parseFloat(react),consum:parseFloat(consum),ind:parseFloat(ind),fecha:new Date().toLocaleDateString('es-BO')});
+  if(hist.length>60) hist.pop();
+  localStorage.setItem('lp2_hist',JSON.stringify(hist));
+  alert('"'+nombre+'" guardado correctamente.');
+}
+
+function renderHistorial(){
+  const hist=JSON.parse(localStorage.getItem('lp2_hist')||'[]');
+  const div=document.getElementById('hist-content');
+  if(!hist.length){
+    div.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><p>Todavía no hay parámetros guardados.<br>Calculá un precio y tocá "Guardar".</p></div>';
+    return;
+  }
+  div.innerHTML=hist.map((h,i)=>`
+    <div class="hist-item">
+      <div class="hist-header">
+        <div><div class="hist-nombre">${h.nombre}</div><div class="hist-meta">${h.tipo} — ${h.fecha}</div></div>
+        <div class="hist-precio">${bs(h.precio)}</div>
+      </div>
+      <div class="hist-desglose">
+        <div>Costo: <strong>${bs(h.costo)}</strong></div>
+        <div>Dep+Mant: <strong>${bs(h.dep)}</strong></div>
+        <div>Energía: <strong>${bs(h.energia)}</strong></div>
+        <div>M.O.: <strong>${bs(h.mo)}</strong></div>
+        <div>Reactivos: <strong>${bs(h.react)}</strong></div>
+        <div>Consumibles: <strong>${bs(h.consum||0)}</strong></div>
+        <div>Indirecto: <strong>${bs(h.ind)}</strong></div>
+        <div>Margen: <strong>${bs(h.precio-h.costo)}</strong></div>
+      </div>
+      <div class="hist-actions">
+        <button class="hist-btn" onclick="eliminar(${i})">Eliminar</button>
+        <button class="hist-btn primary" onclick="copiar('${h.nombre.replace(/'/g,"\\'")}',${h.precio})">Copiar precio</button>
+      </div>
+    </div>`).join('');
+}
+
+function eliminar(i){
+  const hist=JSON.parse(localStorage.getItem('lp2_hist')||'[]');
+  hist.splice(i,1);
+  localStorage.setItem('lp2_hist',JSON.stringify(hist));
+  renderHistorial();
+}
+
+function copiar(nombre,precio){
+  const txt=nombre+': '+bs(precio);
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>alert('Copiado al portapapeles'));
+  else alert(txt);
+}
+
+function limpiarHistorial(){
+  if(confirm('¿Eliminar todos los parámetros guardados?')){
+    localStorage.removeItem('lp2_hist');
+    renderHistorial();
+  }
+}
+
+// ─── NAVEGACIÓN ───────────────────────────────────────────────────────────────
+function showScreen(name,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+// ─── PWA ──────────────────────────────────────────────────────────────────────
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  const b=document.getElementById('install-banner');
+  if(b)b.style.display='flex';
+});
+function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('install-banner').style.display='none';});
+  }
+}
+
+const manifest={name:'LabPrecio — Calculadora Ambiental',short_name:'LabPrecio',description:'Calculadora de precios por parámetro para laboratorio ambiental — Bolivia',start_url:'.',display:'standalone',background_color:'#f8fafc',theme_color:'#1a56db',icons:[{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%231a56db"/><text y=".9em" font-size="72" x="14">🧪</text></svg>',sizes:'192x192',type:'image/svg+xml'}]};
+const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+document.getElementById('manifest-placeholder').href=URL.createObjectURL(blob);
+if('serviceWorker' in navigator){
+  const sw=`const C='lp2-v1';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['.']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderReactivos();
+renderConsumibles();
+updateInfos();
+</script>
+</body>
+</html>
